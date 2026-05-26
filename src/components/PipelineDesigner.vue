@@ -586,15 +586,10 @@ const goBack = () => {
           </div>
 
           <div class="config-group">
-            <h4 class="group-title">Analysis Model</h4>
-
+            <span class="helper-text compact-helper">Select a model to configure its parameters. You can import a parameter configuration, create one manually, and export it for future use.</span>
             <div v-if="isAlertTranslatorNode(selectedCanvasNode)" class="parameter-actions">
               <button type="button" class="btn-secondary compact-button" @click="openParametersFilePicker">
                 Import Parameters
-              </button>
-
-              <button type="button" class="btn-secondary compact-button" @click="exportSelectedParameters">
-                Export Parameters
               </button>
 
               <input
@@ -676,7 +671,15 @@ const goBack = () => {
               <h4 class="group-title">Parameters JSON</h4>
               <pre>{{ selectedParametersJson }}</pre>
             </div>
+            &nbsp;
+            <button
+              v-if="isAlertTranslatorNode(selectedCanvasNode)"
+              type="button"
+              class="btn-secondary compact-button"
+              @click="exportSelectedParameters"
+              > Export Parameters</button>
           </div>
+          
         </aside>
       </aside>
 
