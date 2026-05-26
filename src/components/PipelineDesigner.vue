@@ -586,7 +586,7 @@ const goBack = () => {
           </div>
 
           <div class="config-group">
-            <span class="helper-text compact-helper">Select a model to configure its parameters. You can import a parameter configuration, create one manually, and export it for future use.</span>
+            <span class="helper-text compact-helper">Select a model to configure its parameters. You can import a parameter configuration or create one manually and export it for future use.</span>
             <div v-if="isAlertTranslatorNode(selectedCanvasNode)" class="parameter-actions">
               <button type="button" class="btn-secondary compact-button" @click="openParametersFilePicker">
                 Import Parameters
