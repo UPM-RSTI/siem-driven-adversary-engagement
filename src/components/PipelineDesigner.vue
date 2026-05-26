@@ -27,6 +27,8 @@ const executionName = ref('');
 const executionInputPath = ref('');
 const executionInputData = ref<any>(null);
 const executionInputText = ref('');
+const executionInputFileSize = ref(0);
+const inputFileError = ref('');
 
 const zoomLevel = ref(1);
 const showSearch = ref(false);
@@ -47,6 +49,7 @@ const NODE_WIDTH = 220;
 const NODE_HORIZONTAL_PADDING = 24;
 const NODE_CENTER_Y = 68;
 const NODE_RENDERED_WIDTH = NODE_WIDTH + NODE_HORIZONTAL_PADDING;
+const MAX_INPUT_FILE_SIZE_BYTES = 10 * 1024 * 1024;
 
 const enrichedNodes = computed(() => {
   return fixedPipeline.pipeline_nodes.map((node: any, index: number) => {
@@ -211,10 +214,23 @@ const readFileAsText = (file: File) => {
 };
 
 const onInputFileSelected = async (event: Event) => {
-  const file = (event.target as HTMLInputElement).files?.[0];
+  const fileInput = event.target as HTMLInputElement;
+  const file = fileInput.files?.[0];
   if (!file) return;
 
+  if (file.size > MAX_INPUT_FILE_SIZE_BYTES) {
+    executionInputPath.value = '';
+    executionInputData.value = null;
+    executionInputText.value = '';
+    executionInputFileSize.value = 0;
+    inputFileError.value = 'Input file must be 10 MB or smaller.';
+    fileInput.value = '';
+    return;
+  }
+
+  inputFileError.value = '';
   executionInputPath.value = file.webkitRelativePath || file.name;
+  executionInputFileSize.value = file.size;
   executionInputText.value = await readFileAsText(file);
 
   try {
@@ -261,38 +277,71 @@ const isAlertTranslatorNode = (node: any) => {
   return node?.id === 'm1' || node?.node_type === 'm1';
 };
 
+const sanitizePayloadContextFieldsValue = (value: unknown) => {
+  const source = Array.isArray(value) ? value : String(value || '').split(',');
+
+  return source
+    .map((field) => String(field || '').trim())
+    .filter((field) => field.length > 0);
+};
+
+const sanitizeParameters = (parameters: Record<string, any> = {}) => {
+  const sanitized = { ...parameters };
+
+  if ('payload_context_fields' in sanitized) {
+    sanitized.payload_context_fields = sanitizePayloadContextFieldsValue(
+      sanitized.payload_context_fields
+    );
+  }
+
+  return sanitized;
+};
+
 const selectedParametersJson = computed(() => {
-  return JSON.stringify(selectedCanvasNode.value?.parameters || {}, null, 2);
+  return JSON.stringify(
+    sanitizeParameters(selectedCanvasNode.value?.parameters || {}),
+    null,
+    2
+  );
 });
 
 const getPayloadContextFields = (node: any) => {
   const value = node?.parameters?.payload_context_fields;
 
   if (Array.isArray(value)) {
-    return value.length > 0 ? value : [''];
+    return value;
   }
 
-  const fields = String(value || '')
-    .split(',')
-    .map((field) => field.trim())
-    .filter((field) => field.length > 0);
-
-  node.parameters.payload_context_fields = fields.length > 0 ? fields : [''];
+  const fields = sanitizePayloadContextFieldsValue(value);
+  node.parameters.payload_context_fields = fields;
 
   return node.parameters.payload_context_fields;
 };
 
+const sanitizePayloadContextFieldsForNode = (node: any) => {
+  if (!node?.parameters) return;
+
+  node.parameters.payload_context_fields = sanitizePayloadContextFieldsValue(
+    node.parameters.payload_context_fields
+  );
+};
+
 const addPayloadContextField = (node: any) => {
-  getPayloadContextFields(node).push('');
+  if (!node?.parameters) return;
+
+  if (!Array.isArray(node.parameters.payload_context_fields)) {
+    node.parameters.payload_context_fields = sanitizePayloadContextFieldsValue(
+      node.parameters.payload_context_fields
+    );
+  }
+
+  node.parameters.payload_context_fields.push('');
 };
 
 const removePayloadContextField = (node: any, index: string | number) => {
   const fields = getPayloadContextFields(node);
   fields.splice(Number(index), 1);
-
-  if (fields.length === 0) {
-    fields.push('');
-  }
+  sanitizePayloadContextFieldsForNode(node);
 };
 
 const normalizeImportedParameters = (data: any) => {
@@ -309,23 +358,13 @@ const normalizeImportedParameters = (data: any) => {
       ttps_field: mapping.ttps || '',
       alert_type_field: mapping.alert_type || '',
       acceptable_risk_field: mapping.acceptable_risk || '',
-      payload_context_fields: Array.isArray(mapping.payload_context)
-        ? mapping.payload_context
-        : String(mapping.payload_context || '')
-            .split(',')
-            .map((field) => field.trim())
-            .filter((field) => field.length > 0)
+      payload_context_fields: sanitizePayloadContextFieldsValue(mapping.payload_context)
     };
   }
 
   return {
     ...source,
-    payload_context_fields: Array.isArray(source?.payload_context_fields)
-      ? source.payload_context_fields
-      : String(source?.payload_context_fields || '')
-          .split(',')
-          .map((field) => field.trim())
-          .filter((field) => field.length > 0)
+    payload_context_fields: sanitizePayloadContextFieldsValue(source?.payload_context_fields)
   };
 };
 
@@ -370,13 +409,7 @@ const exportSelectedParameters = () => {
 };
 
 const buildTranslatorConfiguration = (parameters: Record<string, any> = {}) => {
-  const rawPayloadContext = parameters.payload_context_fields;
-  const payloadContextSource = Array.isArray(rawPayloadContext)
-    ? rawPayloadContext
-    : String(rawPayloadContext || '').split(',');
-  const payloadContext = payloadContextSource
-    .map((field) => field.trim())
-    .filter((field) => field.length > 0);
+  const payloadContext = sanitizePayloadContextFieldsValue(parameters.payload_context_fields);
 
   return {
     siem: {
@@ -407,7 +440,7 @@ const buildPipelineSnapshot = () => {
     return {
       ...node,
       node_name: canvasNode?.name || node.node_name,
-      node_parameters: { ...(canvasNode?.parameters || {}) },
+      node_parameters: sanitizeParameters(canvasNode?.parameters || {}),
       node_execution_settings: { ...(canvasNode?.execution || {}) },
       node_output_configuration: { ...(canvasNode?.outputConfig || {}) }
     };
@@ -422,6 +455,11 @@ const buildPipelineSnapshot = () => {
 const createExecution = () => {
   if (!executionInputPath.value.trim()) {
     alert('Input file path is required.');
+    return;
+  }
+
+  if (executionInputFileSize.value > MAX_INPUT_FILE_SIZE_BYTES) {
+    alert('Input file must be 10 MB or smaller.');
     return;
   }
 
@@ -464,7 +502,7 @@ const createExecution = () => {
       model_parameters: Object.fromEntries(
         canvasNodes.value.map((node) => [
           node.node_id || node.instanceId,
-          { ...(node.parameters || {}) }
+          sanitizeParameters(node.parameters || {})
         ])
       )
     },
@@ -538,6 +576,8 @@ const goBack = () => {
             </button>
             <input ref="inputFileRef" class="file-input" type="file" @change="onInputFileSelected" />
           </div>
+          <p class="helper-text compact-helper">Maximum file size: 10 MB.</p>
+          <p v-if="inputFileError" class="helper-text compact-helper" style="color: #dc2626;">{{ inputFileError }}</p>
         </div>
 
         <aside v-if="selectedCanvasNode" class="config-panel">
@@ -600,6 +640,7 @@ const goBack = () => {
                         type="text"
                         class="text-input"
                         placeholder="Example: rule.id"
+                        @blur="sanitizePayloadContextFieldsForNode(selectedCanvasNode)"
                       />
 
                       <button

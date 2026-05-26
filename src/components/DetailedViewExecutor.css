@@ -102,7 +102,7 @@
 .status-badge { display: inline-flex; align-items: center; justify-content: center; padding: 4px 12px; border-radius: 4px; font-size: 12px; font-weight: 700; color: white; min-width: 80px; }
 .status-badge.running { background-color: #557591; }
 .status-badge.finished { background-color: #10B981 !important; color: #000000 !important; }
-.status-badge.paused { background-color: #B6F0FA; color: #111827; }
+.status-badge.failed { background-color: #E23D3D; }
 .status-badge.error { background-color: #E23D3D; }
 .status-badge.aborted { background-color: #FBBF24; color: #111827; }
 

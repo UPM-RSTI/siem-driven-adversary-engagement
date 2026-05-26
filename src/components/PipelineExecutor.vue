@@ -13,6 +13,7 @@ const selectedSimulationId = ref<string | null>(null);
 const showToast = ref(false);
 const toastSimulationId = ref('');
 const toastAction = ref('');
+const activeAbortController = ref<AbortController | null>(null);
 
 const fixedPipeline = (pipelinesData as any[])[0];
 const fixedModels = modelsData as any[];
@@ -56,7 +57,7 @@ const normalizeStatus = (status: string | undefined | null) => {
   if (s === 'queued' || s === 'ready') return 'Ready';
   if (s === 'success' || s === 'finished') return 'Finished';
   if (s === 'failed' || s === 'error') return 'Failed';
-  if (s === 'aborted' || s === 'stopped') return 'Aborted';
+  if (s === 'aborted' || s === 'stopped' || s === 'paused') return 'Aborted';
   if (!s) return 'Ready';
 
   return s.charAt(0).toUpperCase() + s.slice(1);
@@ -87,11 +88,10 @@ const currentExecutionStatus = computed(() => {
 });
 
 const canPlay = computed(() => {
-  return !!selectedSim.value && ['ready', 'paused', 'failed', 'aborted'].includes(currentExecutionStatus.value);
+  return !!selectedSim.value && ['ready', 'failed', 'aborted'].includes(currentExecutionStatus.value);
 });
 
-const canPause = computed(() => !!selectedSim.value && currentExecutionStatus.value === 'running');
-const canStop = computed(() => !!selectedSim.value && ['running', 'paused'].includes(currentExecutionStatus.value));
+const canStop = computed(() => !!selectedSim.value && currentExecutionStatus.value === 'running');
 const canRestart = computed(() => !!selectedSim.value && ['finished', 'failed', 'aborted'].includes(currentExecutionStatus.value));
 const canDelete = computed(() => !!selectedSim.value && currentExecutionStatus.value !== 'running');
 
@@ -239,7 +239,7 @@ const buildHookPayload = (sim: any, payload: any, node: any, previousOutput: any
   };
 };
 
-const runWebhookPipeline = async (sim: any) => {
+const runWebhookPipeline = async (sim: any, signal: AbortSignal) => {
   const payload = buildExecutionPayload(sim);
   const executionId = sim.execution_id || `HOOK-${Date.now()}`;
   const now = new Date().toISOString();
@@ -249,7 +249,24 @@ const runWebhookPipeline = async (sim: any) => {
 
   const steps = [];
 
+  const buildAbortedResult = () => ({
+    execution_id: executionId,
+    status: 'aborted',
+    steps,
+    logs,
+    input: payload.input,
+    output: {
+      model_outputs: output,
+      final_output: null,
+      logs
+    }
+  });
+
   for (const node of payload.nodes) {
+    if (signal.aborted) {
+      return buildAbortedResult();
+    }
+
     const taskId = buildExpectedTaskId(node);
     const webhookPath = getWebhookPath(node);
 
@@ -275,24 +292,37 @@ const runWebhookPipeline = async (sim: any) => {
       throw new Error(`No webhook configured for ${node.script || node.name}`);
     }
 
-    const response = await fetch(`${WEBHOOK_URL}${webhookPath}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(buildHookPayload(sim, payload, node, previousOutput))
-    });
+    try {
+      const response = await fetch(`${WEBHOOK_URL}${webhookPath}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(buildHookPayload(sim, payload, node, previousOutput)),
+        signal
+      });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`${webhookPath} failed with status ${response.status}: ${errorText}`);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`${webhookPath} failed with status ${response.status}: ${errorText}`);
+      }
+
+      const result = await response.json();
+      const finishedAt = new Date().toISOString();
+      step.state = 'success';
+      step.finished_at = finishedAt;
+      output[node.id] = result;
+      previousOutput = result.output || result.variables || result;
+      logs[taskId].push({ timestamp: finishedAt, event: `${node.name} completed.` });
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        const abortedAt = new Date().toISOString();
+        step.state = 'aborted';
+        step.finished_at = abortedAt;
+        logs[taskId].push({ timestamp: abortedAt, event: 'Execution aborted.' });
+        return buildAbortedResult();
+      }
+
+      throw error;
     }
-
-    const result = await response.json();
-    const finishedAt = new Date().toISOString();
-    step.state = 'success';
-    step.finished_at = finishedAt;
-    output[node.id] = result;
-    previousOutput = result.output || result.variables || result;
-    logs[taskId].push({ timestamp: finishedAt, event: `${node.name} completed.` });
   }
 
   return {
@@ -312,7 +342,11 @@ const runWebhookPipeline = async (sim: any) => {
 const handlePlay = async () => {
   if (!canPlay.value || !selectedSim.value) return;
 
+  const executionId = selectedSim.value.execution_id || `HOOK-${Date.now()}`;
+  const abortController = new AbortController();
+  activeAbortController.value = abortController;
   selectedSim.value.status = 'Running';
+  selectedSim.value.execution_id = executionId;
 
   if (selectedSim.value.metadata) {
     selectedSim.value.metadata.updated_at = new Date().toISOString();
@@ -321,7 +355,7 @@ const handlePlay = async () => {
   syncDatabase();
 
   try {
-    const executionResult = await runWebhookPipeline(selectedSim.value);
+    const executionResult = await runWebhookPipeline(selectedSim.value, abortController.signal);
 
     selectedSim.value.execution_id = executionResult.execution_id;
     selectedSim.value.execution_data = executionResult;
@@ -329,26 +363,24 @@ const handlePlay = async () => {
     selectedSim.value.status = normalizeStatus(executionResult.status);
   } catch (error) {
     console.error('Webhook execution failed:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
     selectedSim.value.status = 'Failed';
     selectedSim.value.execution_data = {
-      execution_id: selectedSim.value.execution_id || `HOOK-${Date.now()}`,
+      execution_id: executionId,
       status: 'failed',
-      error: error instanceof Error ? error.message : String(error)
+      error: errorMessage
     };
-    alert(`No se pudo ejecutar la pipeline: ${error instanceof Error ? error.message : String(error)}`);
+    selectedSim.value.output = {
+      model_outputs: {},
+      final_output: null,
+      error: errorMessage
+    };
+    alert(`No se pudo ejecutar la pipeline: ${errorMessage}`);
+  } finally {
+    if (activeAbortController.value === abortController) {
+      activeAbortController.value = null;
+    }
   }
-
-  if (selectedSim.value.metadata) {
-    selectedSim.value.metadata.updated_at = new Date().toISOString();
-  }
-
-  syncDatabase();
-};
-
-const handlePause = () => {
-  if (!canPause.value || !selectedSim.value) return;
-
-  selectedSim.value.status = 'Paused';
 
   if (selectedSim.value.metadata) {
     selectedSim.value.metadata.updated_at = new Date().toISOString();
@@ -360,7 +392,13 @@ const handlePause = () => {
 const handleStop = () => {
   if (!canStop.value || !selectedSim.value) return;
 
+  activeAbortController.value?.abort();
   selectedSim.value.status = 'Aborted';
+  selectedSim.value.execution_data = {
+    ...(selectedSim.value.execution_data || {}),
+    execution_id: selectedSim.value.execution_id,
+    status: 'aborted'
+  };
 
   if (selectedSim.value.metadata) {
     selectedSim.value.metadata.updated_at = new Date().toISOString();
@@ -443,11 +481,6 @@ const goToDesign = () => {
         <button class="btn-action" :class="{ disabled: !canPlay }" @click="handlePlay">
           <img src="/actions/Play.svg" alt="Play" />
           Play
-        </button>
-
-        <button class="btn-action" :class="{ disabled: !canPause }" @click="handlePause">
-          <img src="/actions/Pause.svg" alt="Pause" />
-          Pause
         </button>
 
         <button class="btn-action" :class="{ disabled: !canStop }" @click="handleStop">

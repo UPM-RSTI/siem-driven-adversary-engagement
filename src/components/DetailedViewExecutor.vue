@@ -15,6 +15,7 @@ const selectedTaskId = ref<string | null>(null);
 const executionLogs = ref<any[]>([]);
 const logsLoading = ref(false);
 const showFinalResultsModal = ref(false);
+const activeAbortController = ref<AbortController | null>(null);
 
 const fixedPipeline = (pipelinesData as any[])[0];
 const fixedModels = modelsData as any[];
@@ -67,8 +68,7 @@ const normalizeStatus = (status: string | undefined | null) => {
   if (s === 'running') return 'running';
   if (s === 'success' || s === 'finished') return 'success';
   if (s === 'failed' || s === 'error') return 'failed';
-  if (s === 'paused') return 'paused';
-  if (s === 'aborted' || s === 'stopped') return 'aborted';
+  if (s === 'aborted' || s === 'stopped' || s === 'paused') return 'aborted';
 
   return s || 'ready';
 };
@@ -85,18 +85,16 @@ const displayExecutionStatus = computed(() => {
   if (status === 'running') return 'Running';
   if (status === 'success') return 'Finished';
   if (status === 'failed') return 'Failed';
-  if (status === 'paused') return 'Paused';
   if (status === 'aborted') return 'Aborted';
 
   return 'Ready';
 });
 
 const canPlay = computed(() => {
-  return !!simulation.value && ['ready', 'paused', 'failed', 'aborted'].includes(currentExecutionStatus.value);
+  return !!simulation.value && ['ready', 'failed', 'aborted'].includes(currentExecutionStatus.value);
 });
 
-const canPause = computed(() => !!simulation.value && currentExecutionStatus.value === 'running');
-const canStop = computed(() => !!simulation.value && ['running', 'paused'].includes(currentExecutionStatus.value));
+const canStop = computed(() => !!simulation.value && currentExecutionStatus.value === 'running');
 const canRestart = computed(() => !!simulation.value && ['success', 'failed', 'aborted'].includes(currentExecutionStatus.value));
 const canDelete = computed(() => !!simulation.value && currentExecutionStatus.value !== 'running');
 
@@ -311,6 +309,8 @@ const handlePlay = async () => {
   if (!simulation.value || !canPlay.value) return;
 
   const runToken = ++localRunToken;
+  const abortController = new AbortController();
+  activeAbortController.value = abortController;
   const executionResult = createInitialLocalExecutionData();
   const modelOutputs: Record<string, any> = {};
   let previousOutput: any = buildExecutionPayload().input;
@@ -327,7 +327,12 @@ const handlePlay = async () => {
   syncDatabase();
 
   for (const step of executionData.value.steps) {
-    if (runToken !== localRunToken) return;
+    if (runToken !== localRunToken) {
+      if (activeAbortController.value === abortController) {
+        activeAbortController.value = null;
+      }
+      return;
+    }
 
     const node = actualPipelineNodes.value.find((item: any) => String(item.node_id) === String(step.node_id));
     const webhookPath = getWebhookPath(node);
@@ -348,7 +353,8 @@ const handlePlay = async () => {
       const response = await fetch(`${WEBHOOK_URL}${webhookPath}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(buildHookPayload(node, previousOutput))
+        body: JSON.stringify(buildHookPayload(node, previousOutput)),
+        signal: abortController.signal
       });
 
       if (!response.ok) {
@@ -369,17 +375,51 @@ const handlePlay = async () => {
       syncDatabase();
     } catch (error) {
       const failedAt = new Date().toISOString();
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        step.state = 'aborted';
+        step.finished_at = failedAt;
+        executionData.value.status = 'aborted';
+        executionData.value.output = {
+          model_outputs: modelOutputs,
+          final_output: null,
+          logs: executionData.value.logs
+        };
+        executionData.value.logs[step.task_id].push({
+          timestamp: failedAt,
+          event: 'Execution aborted.'
+        });
+        simulation.value.status = 'Aborted';
+        simulation.value.execution_data = executionData.value;
+        simulation.value.output = executionData.value.output;
+        syncDatabase();
+        if (activeAbortController.value === abortController) {
+          activeAbortController.value = null;
+        }
+        return;
+      }
+
+      const errorMessage = error instanceof Error ? error.message : String(error);
       step.state = 'failed';
       step.finished_at = failedAt;
       executionData.value.status = 'failed';
+      executionData.value.output = {
+        model_outputs: modelOutputs,
+        final_output: null,
+        logs: executionData.value.logs,
+        error: errorMessage
+      };
       executionData.value.logs[step.task_id].push({
         timestamp: failedAt,
-        event: error instanceof Error ? error.message : String(error)
+        event: errorMessage
       });
       simulation.value.status = 'Failed';
       simulation.value.execution_data = executionData.value;
+      simulation.value.output = executionData.value.output;
       syncDatabase();
-      alert(`No se pudo ejecutar la pipeline: ${error instanceof Error ? error.message : String(error)}`);
+      if (activeAbortController.value === abortController) {
+        activeAbortController.value = null;
+      }
+      alert(`No se pudo ejecutar la pipeline: ${errorMessage}`);
       return;
     }
   }
@@ -401,23 +441,10 @@ const handlePlay = async () => {
   syncDatabase();
   if (selectedTaskId.value) await loadTaskLogs(selectedTaskId.value);
   showFinalResultsModal.value = true;
-};
 
-const handlePause = () => {
-  if (!simulation.value || !canPause.value) return;
-
-  simulation.value.status = 'Paused';
-  stopPolling();
-  if (executionData.value) {
-    executionData.value.status = 'paused';
-    simulation.value.execution_data = executionData.value;
+  if (activeAbortController.value === abortController) {
+    activeAbortController.value = null;
   }
-
-  if (simulation.value.metadata) {
-    simulation.value.metadata.updated_at = new Date().toISOString();
-  }
-
-  syncDatabase();
 };
 
 const handleStop = () => {
@@ -426,9 +453,15 @@ const handleStop = () => {
   if (!confirm('Are you sure you want to stop this execution?')) return;
 
   simulation.value.status = 'Aborted';
+  activeAbortController.value?.abort();
   stopPolling();
   if (executionData.value) {
     executionData.value.status = 'aborted';
+    executionData.value.output = {
+      model_outputs: executionData.value.output?.model_outputs || {},
+      final_output: null,
+      logs: executionData.value.logs
+    };
     executionData.value.steps.forEach((step: any) => {
       if (step.state === 'queued' || step.state === 'running') {
         step.state = 'aborted';
@@ -436,6 +469,7 @@ const handleStop = () => {
       }
     });
     simulation.value.execution_data = executionData.value;
+    simulation.value.output = executionData.value.output;
   }
 
   if (simulation.value.metadata) {
@@ -789,6 +823,7 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
+  activeAbortController.value?.abort();
   stopPolling();
 });
 </script>
@@ -817,11 +852,6 @@ onUnmounted(() => {
         <button class="btn-action" :class="{ disabled: !canPlay }" @click="handlePlay">
           <img src="/actions/Play.svg" alt="Play" />
           Play
-        </button>
-
-        <button class="btn-action" :class="{ disabled: !canPause }" @click="handlePause">
-          <img src="/actions/Pause.svg" alt="Pause" />
-          Pause
         </button>
 
         <button class="btn-action" :class="{ disabled: !canStop }" @click="handleStop">

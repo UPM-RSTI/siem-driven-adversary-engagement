@@ -215,7 +215,7 @@
 /* Colores exactos basados en la imagen */
 .status-badge.running { background-color: #557591; }
 .status-badge.finished { background-color: #5A9D22; }
-.status-badge.paused { background-color: #B6F0FA; }
+.status-badge.failed { background-color: #E23D3D; }
 .status-badge.error { background-color: #E23D3D; }
 .status-badge.aborted { background-color: #FBBF24; }
 .status-badge.ready { background-color: #A855F7 !important; }

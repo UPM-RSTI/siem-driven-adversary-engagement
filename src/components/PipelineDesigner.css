@@ -169,7 +169,7 @@
 }
 
 .compact-helper {
-  margin: 0;
+  margin: 5px 0;
 }
 
 .parameter-actions {
@@ -341,7 +341,7 @@
 }
 
 .btn-primary-exec {
-  background-color: #bc5f08;
+  background-color: #094b53;
   color: white;
   border: none;
   padding: 8px 16px;
