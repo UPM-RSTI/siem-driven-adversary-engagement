@@ -7,7 +7,6 @@ from typing import Any, Dict, List, Optional
 NORMALIZED_ALERT_FIELDS = [
     "id",
     "name",
-    "description",
     "ttps",
     "alert_type",
     "max_cvss_base_score",
@@ -85,7 +84,7 @@ def get_next_alert_id(existing_alerts: List[Dict[str, Any]]) -> int:
 def get_nested_value(data: Any, path: Optional[str]) -> Any:
     """
     Resolve dot notation paths such as:
-      - rule.description
+      - rule.title
       - rule.mitre.id
       - tags.engage.alert_type
 
@@ -409,7 +408,6 @@ def translate_alert(
     mapping = config.get("field_mapping", {})
 
     name = get_nested_value(alert, mapping.get("name"))
-    description = get_nested_value(alert, mapping.get("description"))
     ttps = extract_ttps(alert, mapping.get("ttps"))
     raw_alert_type = get_nested_value(alert, mapping.get("alert_type"))
     score_fields = {
@@ -421,7 +419,6 @@ def translate_alert(
     processed_alert = {
         "id": alert_id,
         "name": str(name).strip() if name else "Unnamed SIEM alert",
-        "description": str(description).strip() if description else "No description provided by the SIEM alert.",
         "ttps": ttps,
         "alert_type": normalize_alert_type(raw_alert_type),
         "max_cvss_base_score": normalized_scores["max_cvss_base_score"],

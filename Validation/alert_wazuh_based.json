@@ -1,0 +1,64 @@
+{
+  "_id": "tMG9KZ0BLMnwHu1ME5s4",
+  "_index": "wazuh-alerts-4.x-2026.03.26",
+  "_score": null,
+  "_type": null,
+  "agent": {
+    "id": "001",
+    "ip": "192.168.56.111",
+    "name": "node1"
+  },
+  "cluster": {
+    "name": "wazuh",
+    "node": "manager"
+  },
+  "decoder": {
+    "name": "c1_ingest_stage"
+  },
+  "full_log": "Mar 26 10:42:19 node1 flower_client_client1_ingest_1[18453]: [INGEST] Copy completed.",
+  "id": "1774521741.705435",
+  "input": {
+    "type": "log"
+  },
+  "location": "journald",
+  "manager": {
+    "name": "wazuh.master"
+  },
+  "predecoder": {
+    "hostname": "node1",
+    "program_name": "flower_client_client1_ingest_1",
+    "timestamp": "Mar 26 10:42:19"
+  },
+  "rule": {
+    "description": "Data Exfiltration -> PA-CySEC-005",
+    "firedtimes": 2,
+    "groups": "custom-threat-rules",
+    "id": "300028",
+    "level": 5,
+    "mail": false,
+    "mitre": {
+      "id": [
+        "T1020",
+        "T1041"
+      ],
+      "tactic": [
+        "Exfiltration"
+      ],
+      "technique": [
+        "Automated Exfiltration",
+        "Exfiltration Over C2 Channel"
+      ]
+    }
+  },
+  "timestamp": "Mar 26, 2026 @ 11:42:21.417",
+  "tags": {
+    "engage": {
+      "alert_type": "elicit",
+      "cvss": {
+        "base_score": 7.0,
+        "impact_subscore": 4.1,
+        "exploitability_subscore": 2.8
+      }
+    }
+  }
+}

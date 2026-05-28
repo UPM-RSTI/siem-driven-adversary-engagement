@@ -138,7 +138,6 @@ const buildTranslatorConfiguration = (parameters: Record<string, any> = {}) => {
     },
     field_mapping: {
       name: String(parameters.name_field || '').trim(),
-      description: String(parameters.description_field || '').trim(),
       ttps: ttpFields,
       alert_type: String(parameters.alert_type_field || '').trim(),
       max_cvss_base_score: String(parameters.max_cvss_base_score || '').trim(),

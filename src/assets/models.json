@@ -19,7 +19,6 @@
       "siem_name": "",
       "input_format": "",
       "name_field": "",
-      "description_field": "",
       "ttps_fields": [],
       "alert_type_field": "",
       "max_cvss_base_score": "",
@@ -33,7 +32,7 @@
       "intervention": "Fully Automated"
     },
     "outputConfig": {
-      "variables": "num_alerts, alerts.id, alerts.name, alerts.description, alerts.ttps, alerts.alert_type, alerts.max_cvss_base_score, alerts.max_impact_subscore, alerts.max_exploitability_subscore, alerts.payload_context",
+      "variables": "num_alerts, alerts.id, alerts.name, alerts.ttps, alerts.alert_type, alerts.max_cvss_base_score, alerts.max_impact_subscore, alerts.max_exploitability_subscore, alerts.payload_context",
       "visualization": "Table"
     }
   },

@@ -23,8 +23,7 @@ from typing import Any, Dict, List, Optional, Set
 # =========================
 # APP PATHS
 # =========================
-APP_DIR = Path(__file__).resolve().parent
-PROJECT_DIR = APP_DIR.parent
+PROJECT_DIR = Path(__file__).resolve().parent.parent
 
 MITRE_DIR = PROJECT_DIR / "MITRE"
 
@@ -822,7 +821,6 @@ def map_alert_to_engage(alert: Dict[str, Any], debug: bool = False) -> Dict[str,
         result["input_alert"] = {
             "id": alert_id,
             "name": alert.get("name"),
-            "description": alert.get("description"),
             "ttps": ttps,
             "alert_type": alert_type,
             "max_cvss_base_score": score_fields["max_cvss_base_score"],

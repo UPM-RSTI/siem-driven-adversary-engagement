@@ -1,0 +1,24 @@
+{
+  "siem_name": "wazuh",
+  "input_format": "json_or_ndjson",
+  "name_field": "rule.description",
+  "description_field": "rule.description",
+  "ttps_field": "rule.mitre.id",
+  "alert_type_field": "tags.engage.alert_type",
+  "max_cvss_base_score": "tags.engage.cvss.base_score",
+  "max_impact_subscore": "tags.engage.cvss.impact_subscore",
+  "max_exploitability_subscore": "tags.engage.cvss.exploitability_subscore",
+  "payload_context_fields": [
+    "rule.id",
+    "timestamp",
+    "full_log",
+    "agent.name",
+    "manager.name",
+    "cluster.name",
+    "cluster.node",
+    "location",
+    "decoder.name",
+    "predecoder.hostname",
+    "predecoder.program_name"
+  ]
+}
