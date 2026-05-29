@@ -39,7 +39,9 @@
     "mitre": {
       "id": [
         "T1020",
-        "T1041"
+        "T1041",
+        "T1530"
+
       ],
       "tactic": [
         "Exfiltration"

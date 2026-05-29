@@ -582,24 +582,141 @@ const finalResultPayload = computed(() => {
   );
 });
 
+const exposureFieldLabels: Record<string, string> = {
+  cvss_base_score: 'CVSS base score',
+  impact_subscore: 'Impact subscore',
+  exploitability_subscore: 'Exploitability subscore'
+};
+
+const finalResultRecommendation = computed(() => {
+  const payload = finalResultPayload.value;
+
+  if (!payload || Array.isArray(payload) || typeof payload !== 'object') return null;
+
+  const recommendation = payload['MITRE Engage recommendation'] || payload;
+
+  if (!Array.isArray(recommendation?.approaches)) return null;
+
+  return recommendation;
+});
+
+const formatExceededFields = (fields: any) => {
+  if (!Array.isArray(fields) || fields.length === 0) return '-';
+
+  return fields
+    .map((field: string) => exposureFieldLabels[field] || field)
+    .join(', ');
+};
+
+const buildRecommendationReason = (recommendation: any) => {
+  if (recommendation?.status === 'not_recommended' && Array.isArray(recommendation?.exceeded_fields)) {
+    return formatExceededFields(recommendation.exceeded_fields);
+  }
+
+  return recommendation?.reason || '-';
+};
+
+const finalResultSummaryCards = computed(() => {
+  const recommendation = finalResultRecommendation.value;
+
+  if (!recommendation) return [];
+
+  return [
+    {
+      label: 'Input Alert',
+      value: recommendation.input_alert_name || `Alert ${recommendation.input_alert_id || '-'}`
+    },
+    {
+      label: 'Goal',
+      value: recommendation.goal_name || recommendation.goal_id || '-'
+    }
+  ];
+});
+
+const toSortableNumber = (value: any) => {
+  return typeof value === 'number' && Number.isFinite(value) ? value : Number.POSITIVE_INFINITY;
+};
+
+const finalResultActivities = computed(() => {
+  const recommendation = finalResultRecommendation.value;
+
+  if (!Array.isArray(recommendation?.approaches)) return [];
+
+  return recommendation.approaches
+    .flatMap((approach: any) => {
+      return (approach.activities || []).map((activity: any) => ({
+        ...activity,
+        approach_id: approach.approach_id,
+        approach_name: approach.approach_name,
+        approach_description: approach.approach_description
+      }));
+    })
+    .sort((left: any, right: any) => {
+      const leftStatus = left?.recommendation?.status;
+      const rightStatus = right?.recommendation?.status;
+      const leftBucket = leftStatus === 'recommended' ? 0 : 1;
+      const rightBucket = rightStatus === 'recommended' ? 0 : 1;
+
+      if (leftBucket !== rightBucket) return leftBucket - rightBucket;
+
+      const leftCvss = toSortableNumber(left?.activity_exposure?.cvss_base_score);
+      const rightCvss = toSortableNumber(right?.activity_exposure?.cvss_base_score);
+
+      if (leftCvss !== rightCvss) return leftCvss - rightCvss;
+
+      return String(left?.activity_name || left?.activity_id || '').localeCompare(
+        String(right?.activity_name || right?.activity_id || '')
+      );
+    });
+});
+
+const buildActivityExposureMetrics = (activity: any, recommendation: any) => {
+  const exposure = activity?.activity_exposure || {};
+
+  return [
+    {
+      label: 'CVSS Base',
+      value: exposure.cvss_base_score ?? '-',
+      threshold: recommendation?.max_cvss_base_score ?? '-'
+    },
+    {
+      label: 'Impact',
+      value: exposure.impact_subscore ?? '-',
+      threshold: recommendation?.max_impact_subscore ?? '-'
+    },
+    {
+      label: 'Exploitability',
+      value: exposure.exploitability_subscore ?? '-',
+      threshold: recommendation?.max_exploitability_subscore ?? '-'
+    }
+  ];
+};
+
 const finalResultRows = computed(() => {
   const payload = finalResultPayload.value;
 
   if (!payload) return [];
 
-  const recommendation = payload['MITRE Engage recommendation'] || payload;
+  const recommendation = finalResultRecommendation.value || payload['MITRE Engage recommendation'] || payload;
 
   if (Array.isArray(recommendation?.approaches)) {
     return recommendation.approaches.flatMap((approach: any) => {
       return (approach.activities || []).map((activity: any) => ({
+        'Alert ID': recommendation.input_alert_id ?? '-',
+        Alert: recommendation.input_alert_name || '-',
         Goal: recommendation.goal_name || recommendation.goal_id || '-',
+        'Goal ID': recommendation.goal_id || '-',
         Approach: approach.approach_name || approach.approach_id || '-',
         Activity: activity.activity_name || activity.activity_id || '-',
         Status: activity.recommendation?.status || '-',
-        Reason: activity.recommendation?.reason || '-',
+        Reason: buildRecommendationReason(activity.recommendation),
+        'Exceeded Fields': formatExceededFields(activity.recommendation?.exceeded_fields),
         'CVSS Base': activity.activity_exposure?.cvss_base_score ?? '-',
+        'Max CVSS Base': recommendation.max_cvss_base_score ?? '-',
         Impact: activity.activity_exposure?.impact_subscore ?? '-',
-        Exploitability: activity.activity_exposure?.exploitability_subscore ?? '-'
+        'Max Impact': recommendation.max_impact_subscore ?? '-',
+        Exploitability: activity.activity_exposure?.exploitability_subscore ?? '-',
+        'Max Exploitability': recommendation.max_exploitability_subscore ?? '-'
       }));
     });
   }
@@ -1214,7 +1331,86 @@ onUnmounted(() => {
           </div>
 
           <template v-if="activeFinalResultsTab === 'results'">
-            <div v-if="finalResultRows.length > 0" class="final-results-table-wrapper">
+            <div v-if="finalResultRecommendation" class="engage-results-panel">
+              <div v-if="finalResultSummaryCards.length > 0" class="engage-summary-grid">
+                <article
+                  v-for="card in finalResultSummaryCards"
+                  :key="card.label"
+                  class="engage-summary-card"
+                >
+                  <span class="engage-summary-label">{{ card.label }}</span>
+                  <strong>{{ card.value }}</strong>
+                </article>
+              </div>
+
+              <div v-if="finalResultActivities.length > 0" class="engage-activity-grid">
+                <article
+                  v-for="activity in finalResultActivities"
+                  :key="`${activity.approach_id || activity.approach_name}-${activity.activity_id || activity.activity_name}`"
+                  class="engage-activity-card"
+                  :class="String(activity.recommendation?.status || '').toLowerCase().replace('_', '-')"
+                >
+                  <div class="engage-activity-header">
+                    <div>
+                      <span class="engage-summary-label">Activity</span>
+                      <h5>{{ activity.activity_name || activity.activity_id || '-' }}</h5>
+                      <p v-if="activity.activity_description" class="engage-activity-description">
+                        {{ activity.activity_description }}
+                      </p>
+                    </div>
+
+                    <span
+                      class="result-status-pill"
+                      :class="String(activity.recommendation?.status || '').toLowerCase().replace('_', '-')"
+                    >
+                      {{ activity.recommendation?.status || '-' }}
+                    </span>
+                  </div>
+
+                  <div class="engage-activity-meta">
+                    <div class="engage-activity-meta-block">
+                      <span class="engage-activity-meta-label">Approach</span>
+                      <strong>{{ activity.approach_name || activity.approach_id || '-' }}</strong>
+                    </div>
+
+                    <div class="engage-activity-meta-block">
+                      <span class="engage-activity-meta-label">Reason</span>
+                      <strong>{{ buildRecommendationReason(activity.recommendation) }}</strong>
+                    </div>
+
+                    <div
+                      v-if="activity.recommendation?.status === 'not_recommended'"
+                      class="engage-activity-meta-block"
+                    >
+                      <span class="engage-activity-meta-label">Exceeded Fields</span>
+                      <strong>{{ formatExceededFields(activity.recommendation?.exceeded_fields) }}</strong>
+                    </div>
+
+                    <div
+                      v-if="activity.activity_exposure?.cvss_vector"
+                      class="engage-activity-meta-block vector"
+                    >
+                      <span class="engage-activity-meta-label">CVSS Vector</span>
+                      <code>{{ activity.activity_exposure.cvss_vector }}</code>
+                    </div>
+                  </div>
+
+                  <div class="engage-metrics-grid">
+                    <article
+                      v-for="metric in buildActivityExposureMetrics(activity, finalResultRecommendation)"
+                      :key="`${activity.activity_id || activity.activity_name}-${metric.label}`"
+                      class="engage-metric-card"
+                    >
+                      <span class="engage-activity-meta-label">{{ metric.label }}</span>
+                      <strong>{{ metric.value }}</strong>
+                      <span class="engage-metric-threshold">Threshold: {{ metric.threshold }}</span>
+                    </article>
+                  </div>
+                </article>
+              </div>
+            </div>
+
+            <div v-else-if="finalResultRows.length > 0" class="final-results-table-wrapper">
               <table class="final-results-table">
                 <thead>
                   <tr>

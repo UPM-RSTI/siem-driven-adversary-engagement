@@ -91,7 +91,28 @@
 .final-results-tab { border: 1px solid #CBD5E1; border-radius: 999px; background: #FFFFFF; color: #475569; padding: 10px 16px; font-size: 13px; font-weight: 800; cursor: pointer; transition: all 0.2s ease; }
 .final-results-tab:hover { border-color: #0F92A3; color: #0F92A3; }
 .final-results-tab.active { border-color: #0F92A3; background: #E6F6F8; color: #0F92A3; }
-.final-results-table-wrapper { overflow: auto; padding: 18px; }
+.engage-results-panel { display: flex; flex-direction: column; gap: 18px; overflow: auto; padding: 18px; }
+.engage-summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
+.engage-summary-card { border: 1px solid #B6E4EA; border-radius: 14px; background: linear-gradient(180deg, #F0FBFC 0%, #FFFFFF 100%); padding: 18px; }
+.engage-summary-card strong { display: block; margin-top: 8px; color: #0F172A; font-size: 22px; font-weight: 800; line-height: 1.3; word-break: break-word; }
+.engage-summary-label { color: #0F92A3; font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+.engage-activity-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+.engage-activity-card { border: 1px solid #D7E4EA; border-radius: 14px; background: #FFFFFF; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+.engage-activity-card.recommended { border-color: #BBF7D0; box-shadow: inset 0 0 0 1px rgba(22, 101, 52, 0.06); }
+.engage-activity-card.not-recommended { border-color: #FECACA; box-shadow: inset 0 0 0 1px rgba(153, 27, 27, 0.05); }
+.engage-activity-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.engage-activity-header h5 { margin: 6px 0 0; color: #0F172A; font-size: 18px; font-weight: 800; line-height: 1.3; }
+.engage-activity-description { margin: 0; color: #475569; font-size: 13px; line-height: 1.55; }
+.engage-activity-meta { display: flex; flex-direction: column; gap: 10px; }
+.engage-activity-meta-block { border: 1px solid #E2E8F0; border-radius: 12px; background: #F8FAFC; padding: 12px; }
+.engage-activity-meta-block strong { display: block; margin-top: 6px; color: #0F172A; font-size: 14px; font-weight: 700; line-height: 1.45; }
+.engage-activity-meta-block.vector code { display: block; margin-top: 6px; color: #0F172A; font-size: 12px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
+.engage-activity-meta-label { display: block; color: #475569; font-size: 10px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; line-height: 1.3; white-space: normal; overflow-wrap: anywhere; }
+.engage-metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+.engage-metric-card { border: 1px solid #E2E8F0; border-radius: 12px; background: #F8FAFC; padding: 12px; }
+.engage-metric-card strong { display: block; margin-top: 6px; color: #0F172A; font-size: 24px; font-weight: 800; line-height: 1.1; }
+.engage-metric-threshold { display: block; margin-top: 8px; color: #475569; font-size: 12px; line-height: 1.4; }
+.final-results-table-wrapper { overflow: auto; }
 .final-results-table { width: 100%; border-collapse: separate; border-spacing: 0; border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden; }
 .final-results-table th { position: sticky; top: 0; z-index: 1; padding: 16px 18px; background: #0F172A; color: #FFFFFF; font-size: 14px; font-weight: 800; letter-spacing: 0.04em; text-align: left; text-transform: uppercase; }
 .final-results-table td { max-width: 330px; padding: 17px 18px; border-top: 1px solid #E2E8F0; color: #334155; font-size: 16px; font-weight: 500; line-height: 1.55; vertical-align: top; word-break: break-word; }
@@ -124,6 +145,9 @@
 @media (max-width: 900px) {
   .final-results-backdrop { padding: 16px; }
   .final-results-tabs { flex-wrap: wrap; }
+  .engage-summary-grid { grid-template-columns: 1fr; }
+  .engage-activity-grid { grid-template-columns: 1fr; }
+  .engage-metrics-grid { grid-template-columns: 1fr; }
   .payload-summary-grid { grid-template-columns: 1fr; }
   .payload-alerts-grid { grid-template-columns: 1fr; }
 }
