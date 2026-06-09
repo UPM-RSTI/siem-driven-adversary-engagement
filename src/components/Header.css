@@ -19,16 +19,16 @@
 .headerTitle {
   display: flex;
   align-items: center;
-  min-height: 35px;
+  min-height: 30px;
   padding-left: 12px;
-  border-left: 4px solid #0F92A3;
+  border-left: 4px solid #EA580C;
 
   font-family: 'Segoe UI', Roboto, Arial, sans-serif;
   font-size: 18px;
   font-weight: 700;
   letter-spacing: 0.2px;
 
-  color: #0F92A3;
+  color: #EA580C;
   margin: 0;
   line-height: 1.2;
 

@@ -51,7 +51,7 @@ const handleDoubleClick = (id: string) => {
   <div class="view-container">
      <div class="header-section">
        <div class="header-info">
-         <h1 class="header-title">Welcome to the Decision Engine platform</h1>
+         <h1 class="header-title">Welcome to the Pipeline Executor platform</h1>
          <p class="header-description">
            Browse and manage your pipelines.
          </p>

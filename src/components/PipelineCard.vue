@@ -139,9 +139,9 @@ const dagNodes = computed(() => {
 }
 
 .is-selected {
-  border-color: #0F92A3 !important; 
-  box-shadow: 0px 0px 0px 1px #0F92A3; 
-  background-color: #F0FBFC; 
+  border-color: #EA580C !important; 
+  box-shadow: 0px 0px 0px 1px #EA580C; 
+  background-color: #FFEDD5; 
 }
 /* --------------------------------- */
 

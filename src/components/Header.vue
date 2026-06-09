@@ -6,7 +6,7 @@ const router = useRouter();
 
 <template>
   <div class="header">
-    <p class="headerTitle" @click="router.push('/')">DECISION ENGINE - TFM</p>
+    <p class="headerTitle" @click="router.push('/')">PIPELINE EXECUTOR - TFM</p>
   </div>
 </template>
 

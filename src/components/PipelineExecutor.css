@@ -9,7 +9,7 @@
 /* Breadcrumbs */
 .breadcrumbs {
   font-size: 12px;
-  color: #0F92A3;
+  color: #EA580C;
   margin-bottom: 8px;
 }
 .breadcrumbs span:not(.active) { cursor: pointer; }
@@ -25,7 +25,7 @@
 .btn-back {
   background: none;
   border: none;
-  color: #0F92A3;
+  color: #EA580C;
   font-weight: 500;
   cursor: pointer;
   padding: 0;
@@ -33,7 +33,7 @@
 }
 
 .btn-primary {
-  background-color: #0F92A3;
+  background-color: #EA580C;
   color: white;
   border: none;
   padding: 8px 16px;
@@ -43,7 +43,7 @@
   cursor: pointer;
 }
 .btn-primary:hover {
-  background-color: #0d7a8a;
+  background-color: #C2410C;
 }
 
 /* Toolbar (Texto y Acciones) */
@@ -77,8 +77,8 @@
 
 .search-input input:focus {
   outline: none;
-  border-color: #0F92A3;
-  box-shadow: 0 0 0 2px rgba(15, 146, 163, 0.1);
+  border-color: #EA580C;
+  box-shadow: 0 0 0 2px rgba(234, 88, 12, 0.12);
 }
 
 .search-icon {
@@ -105,7 +105,7 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  color: #0F92A3; 
+  color: #EA580C; 
   font-weight: 500;
   transition: all 0.2s;
   padding: 0;
@@ -150,12 +150,12 @@
 
 /* Fila Seleccionada */
 .data-grid tr.selected-row td {
-  background-color: #E0F7FA;
-  border-bottom-color: #0F92A3;
+  background-color: #FFEDD5;
+  border-bottom-color: #EA580C;
 }
 
 .fw-bold { font-weight: 600; }
-.text-teal { color: #0F92A3; }
+.text-teal { color: #EA580C; }
 .text-gray { color: #64748B; }
 
 .empty-state {
@@ -176,7 +176,7 @@
   top: 80px; 
   right: 24px;
   background: white;
-  border: 1px solid #84CC16;
+  border: 1px solid #FB923C;
   border-radius: 4px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   display: flex;
@@ -188,7 +188,7 @@
   font-family: 'Roboto', sans-serif;
 }
 
-.toast-content h4 { margin: 0 0 4px 0; color: #65A30D; font-size: 15px; font-weight: 500; }
+.toast-content h4 { margin: 0 0 4px 0; color: #C2410C; font-size: 15px; font-weight: 500; }
 .toast-content p { margin: 0; color: #334155; font-size: 13px; }
 .toast-close { background: none; border: none; color: #64748B; font-size: 16px; cursor: pointer; margin-left: auto; padding: 0; }
 .toast-close:hover { color: #0F172A; }
@@ -214,7 +214,7 @@
 
 /* Colores exactos basados en la imagen */
 .status-badge.running { background-color: #557591; }
-.status-badge.finished { background-color: #5A9D22; }
+.status-badge.finished { background-color: #EA580C; }
 .status-badge.failed { background-color: #E23D3D; }
 .status-badge.error { background-color: #E23D3D; }
 .status-badge.aborted { background-color: #FBBF24; }
