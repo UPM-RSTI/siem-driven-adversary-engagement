@@ -3,7 +3,7 @@
 **Plataforma para ejecutar y validar un modelo de adversary engagement dirigido por alertas SIEM y basado en MITRE Engage.**
 
 Este proyecto implementa una interfaz web que permite cargar alertas SIEM enriquecidas, traducirlas a una representación común y ejecutar un pipeline de decisión basado en **MITRE Engage**.
-El objetivo es transformar una evidencia de ataque en una salida trazable similar a un playbook, indicando qué Activities pueden recomendarse y cuáles quedan descartadas según los límites de exposición definidos.
+El objetivo es transformar una evidencia de ataque en una salida trazable similar a un playbook, indicando qué Activities pueden recomendarse y cuáles quedan descartadas según los límites de exposición definidos por CVSS v3.1.
 
 ---
 
