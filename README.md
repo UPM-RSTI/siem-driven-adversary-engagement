@@ -170,26 +170,6 @@ La alerta normalizada contiene los campos necesarios para que el modelo pueda to
 
 ---
 
-## Hooks disponibles
-
-### Alert Translator
-
-```text
-POST /translator
-```
-
-Recibe una alerta SIEM nativa y devuelve una alerta normalizada con los campos necesarios para el modelo de decisión.
-
-### Engage Mapper
-
-```text
-POST /engage-mapper
-```
-
-Recibe una alerta normalizada y genera una salida basada en MITRE Engage, incluyendo Goals, Approaches, Activities y su estado de recomendación.
-
----
-
 ## Despliegue con Docker
 
 El proyecto también puede ejecutarse mediante Docker si se quiere desplegar como microservicio.
