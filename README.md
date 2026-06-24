@@ -93,11 +93,16 @@ El pipeline principal está compuesto por dos modelos:
 ```
 
 ### Directorios principales
-src/: contiene el frontend de la aplicación, desarrollado con Vue y Vite. Incluye los componentes principales de la interfaz, los estilos y los ficheros de configuración visual utilizados por la aplicación.
-app/: contiene la lógica principal en Python. Incluye el traductor de alertas, el mapeo con MITRE Engage y el servidor encargado de exponer la funcionalidad mediante peticiones web.
-MITRE/: contiene los ficheros JSON utilizados por el sistema para trabajar con los datos de MITRE Engage, sus objetivos, enfoques, actividades, puntuaciones de exposición y relaciones con ATT&CK.
-Validation/: contiene ficheros de validación y ejemplos de entrada utilizados para comprobar el funcionamiento del sistema con alertas y parámetros de prueba.
-public/: contiene recursos estáticos utilizados por la interfaz.
+
+* **`src/`**: contiene el frontend de la plataforma de validación. Permite cargar modelos, configurar ejecuciones, lanzar el pipeline y visualizar los resultados generados por el modelo de decisión.
+
+* **`app/`**: contiene la lógica principal del backend en Python. Incluye el modelo de traducción de alertas SIEM, el modelo de decisión MITRE Engage y el servidor encargado de exponer la funcionalidad mediante una API.
+
+* **`MITRE/`**: contiene los ficheros JSON utilizados por el modelo de decisión. Estos archivos representan la información necesaria de MITRE Engage, incluyendo Goals, Approaches, Activities, sus relaciones, mapeos con MITRE ATT&CK y valores de exposición derivados de CVSS.
+
+* **`Validation/`**: contiene los ficheros de ejemplo utilizados para validar el funcionamiento del sistema. Incluye una alerta de SIEM Wazuh enriquecida y los parámetros de configuración del modelo de traducción.
+
+* **`public/`**: contiene recursos estáticos utilizados por la interfaz de la aplicación.
 
 
 ## Instalación del proyecto
