@@ -46,21 +46,38 @@ El pipeline principal está compuesto por dos modelos:
 
 ## Requisitos previos
 
-Antes de ejecutar el proyecto, asegúrate de tener instalado:
+## Requisitos previos
+
+Antes de ejecutar el proyecto, comprueba que tienes instaladas las siguientes herramientas:
 
 * **Node.js**
-* **npm**
-* **Python 3**
-* **pip**
-* **Uvicorn**
-
-Puedes comprobar la instalación con:
 
 ```bash
 node -v
+```
+
+* **npm**
+
+```bash
 npm -v
+```
+
+* **Python 3**
+
+```bash
 python --version
+```
+
+* **pip**
+
+```bash
 pip --version
+```
+
+* **Uvicorn**
+
+```bash
+uvicorn --version
 ```
 
 ---
