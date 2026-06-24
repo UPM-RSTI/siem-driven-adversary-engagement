@@ -44,41 +44,59 @@ El pipeline principal está compuesto por dos modelos:
 
 ---
 
-## Requisitos previos
+## Estructura principal del proyecto
+.
+├── src/
+│   ├── App.vue
+│   ├── App.css
+│   ├── main.js
+│   ├── index.js
+│   ├── assets/
+│   │   ├── models.json
+│   │   └── pipelines.json
+│   └── components/
+│       ├── DetailedViewExecutor.vue
+│       ├── Header.vue
+│       ├── PipelineCard.vue
+│       ├── PipelineDesigner.vue
+│       ├── PipelineExecutor.vue
+│       └── PipelinesList.vue
+│
+├── app/
+│   ├── engage_mapper.py
+│   ├── translator.py
+│   ├── webhook_server.py
+│   └── README.txt
+│
+├── MITRE/
+│   ├── activity_details.json
+│   ├── activity_exposure_scores.json
+│   ├── approach_activity_mappings.json
+│   ├── approach_details.json
+│   ├── attack_mapping.json
+│   ├── goal_approach_mappings.json
+│   └── goal_details.json
+│
+├── Validation/
+│   ├── alert-translator-parameters.json
+│   └── alert_wazuh_based.json
+│
+├── public/
+├── Dockerfile
+├── docker-compose.yml
+├── package.json
+├── package-lock.json
+├── vite.config.js
+├── index.html
+└── README.md
 
-Antes de ejecutar el proyecto, comprueba que tienes instaladas las siguientes herramientas:
+### Directorios principales
+src/: contiene el frontend de la aplicación, desarrollado con Vue y Vite. Incluye los componentes principales de la interfaz, los estilos y los ficheros de configuración visual utilizados por la aplicación.
+app/: contiene la lógica principal en Python. Incluye el traductor de alertas, el mapeo con MITRE Engage y el servidor encargado de exponer la funcionalidad mediante peticiones web.
+MITRE/: contiene los ficheros JSON utilizados por el sistema para trabajar con los datos de MITRE Engage, sus objetivos, enfoques, actividades, puntuaciones de exposición y relaciones con ATT&CK.
+Validation/: contiene ficheros de validación y ejemplos de entrada utilizados para comprobar el funcionamiento del sistema con alertas y parámetros de prueba.
+public/: contiene recursos estáticos utilizados por la interfaz.
 
-* **Node.js**
-
-```bash
-node -v
-```
-
-* **npm**
-
-```bash
-npm -v
-```
-
-* **Python 3**
-
-```bash
-python --version
-```
-
-* **pip**
-
-```bash
-pip --version
-```
-
-* **Uvicorn**
-
-```bash
-uvicorn --version
-```
-
----
 
 ## Instalación del proyecto
 
