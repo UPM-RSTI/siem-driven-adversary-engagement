@@ -96,7 +96,7 @@ El pipeline principal está compuesto por dos modelos:
 
 * **`src/`**: contiene el frontend de la plataforma de validación. Permite cargar modelos, configurar ejecuciones, lanzar el pipeline y visualizar los resultados generados por el modelo de decisión.
 
-* **`app/`**: contiene la lógica principal del backend en Python. Incluye el modelo de traducción de alertas SIEM, el modelo de decisión MITRE Engage y el servidor encargado de exponer la funcionalidad mediante una API.
+* **`app/`**: contiene el backend de la plataforma de validación. Además, incluye el modelo de traducción de alertas SIEM, el modelo de decisión MITRE Engage y el servidor encargado de exponer la funcionalidad mediante una API.
 
 * **`MITRE/`**: contiene los ficheros JSON utilizados por el modelo de decisión. Estos archivos representan la información necesaria de MITRE Engage, incluyendo Goals, Approaches, Activities, sus relaciones, mapeos con MITRE ATT&CK y valores de exposición derivados de CVSS.
 
