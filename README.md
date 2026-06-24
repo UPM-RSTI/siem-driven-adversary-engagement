@@ -46,8 +46,6 @@ El pipeline principal está compuesto por dos modelos:
 
 ## Requisitos previos
 
-## Requisitos previos
-
 Antes de ejecutar el proyecto, comprueba que tienes instaladas las siguientes herramientas:
 
 * **Node.js**
