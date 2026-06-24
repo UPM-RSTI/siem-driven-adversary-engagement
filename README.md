@@ -45,6 +45,7 @@ El pipeline principal está compuesto por dos modelos:
 ---
 
 ## Estructura principal del proyecto
+```text
 .
 ├── src/
 │   ├── App.vue
@@ -89,6 +90,7 @@ El pipeline principal está compuesto por dos modelos:
 ├── vite.config.js
 ├── index.html
 └── README.md
+```
 
 ### Directorios principales
 src/: contiene el frontend de la aplicación, desarrollado con Vue y Vite. Incluye los componentes principales de la interfaz, los estilos y los ficheros de configuración visual utilizados por la aplicación.
