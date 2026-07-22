@@ -2,9 +2,9 @@
 
 **Platform for executing and validating a SIEM alert-driven adversary engagement model based on MITRE Engage.**
 
-This repository accompanies the Master's Thesis:
+This repository accompanies the ARES article:
 
-**SIEM Alert-Driven Adversary Engagement Model Based on MITRE Engage**
+**Explainable and Interoperable SIEM-Driven Adversary Engagement Based on MITRE Engage**
 
 The main objective is to validate that an enriched SIEM alert can be transformed into a traceable, explainable, and executable MITRE Engage recommendation within a realistic workflow.
 
