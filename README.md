@@ -233,8 +233,8 @@ If the application's internal port is changed, or if the backend is also deploye
 ## Author
 
 **Daniel Martín García**
-email: daniel.martin33@alumnos.upm.es
-personal email: dmg292003@gmail.com
+* Work email: daniel.martin33@alumnos.upm.es
+* Personal email: dmg292003@gmail.com
 
 Universidad Politécnica de Madrid  
 2026
